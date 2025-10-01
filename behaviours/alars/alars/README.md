@@ -1,4 +1,4 @@
-# RescuePointServer
+# README for RescuePointServer
 
 A ROS 2 action server that computes and publishes a multi-phase recovery trajectory for drone–SAM recovery missions. It receives GeoPoints as input and publishes the trajectory as `PoseStamped` setpoints.
 
