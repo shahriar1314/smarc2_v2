@@ -24,13 +24,13 @@ The server expects a JSON **dict** with the following fields (note the updated k
       "altitude":  <float>
    },
 
-   "min_height_above_water": <float>,  // safety Z at rope midpoint
-   "swoop_vertical":         <float>,  // start-point Z offset above midpoint
-   "swoop_horizontal":       <float>,  // start-point lateral offset (perpendicular to rope)
-   "straight_before_rope":   <float>,  // switch distance to flat pass
-   "straight_distance":      <float>,  // flat pass length after SAM
-   "raise_horizontal":       <float>,  // incline horizontal component
-   "raise_vertical":         <float>   // incline vertical component
+   "min_height_above_water": <float>,  
+   "swoop_vertical":         <float>,  // start-point height
+   "swoop_horizontal":       <float>,  // start-point lateral distance (perpendicular to rope)
+   "straight_before_rope":   <float>,  // switching distance to flat pass
+   "straight_distance":      <float>,  // flat pass length after collecting SAM rope
+   "raise_horizontal":       <float>,  // fly-out horizontal distance
+   "raise_vertical":         <float>   // fly-out vertical distance
    }
 ```
 
@@ -42,13 +42,13 @@ The server expects a JSON **dict** with the following fields (note the updated k
 
 ---
 
-## Parameters — Needed to be Changed
+## Parameters — Needed to be Changed/Adjusted
 
 Goal JSON (per mission; shown with sensible starting values):
 
 * `swoop_horizontal` (m): lateral offset from rope midpoint (example: `12.0`)
 * `swoop_vertical` (m): vertical offset above rope midpoint (example: `8.0`)
-* `min_height_above_water` (m): safety margin at midpoint (example: `1.0`)
+* `min_height_above_water` (m): safety margin at midpoint (example: `3.0`)
 * `straight_before_rope` (m): switch distance to flat pass (example: `6.0`)
 * `straight_distance` (m): length of straight pass after SAM (example: `10.0`)
 * `raise_horizontal` (m), `raise_vertical` (m): inclined fly-out vector (examples: `20.0`, `10.0`)
@@ -70,10 +70,10 @@ ROS params:
 
 ---
 
-## Parameters — Not Needed to be Changed (advanced)
+## Parameters — Not Needed to be Changed
 
 * `initial_velocity` (m/s): τ timing scale (default: `5.0`)
-* `tau_k`: τ shape parameter (default: `0.4`)
+* `tau_k`: τ shape parameter (default: `0.4`, range: `0.1` to `0.5`)
 * `kd_alpha`: α-coupling exponent (default: `0.8`)
 
 ---
