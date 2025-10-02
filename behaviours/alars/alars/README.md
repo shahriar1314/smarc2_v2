@@ -7,9 +7,8 @@ A ROS 2 action server that computes and publishes a multi-phase recovery traject
 ## Inputs & Outputs
 
 ### Input
-Action server name: **`/alars_recover`**
 
-The server expects a JSON **dict** with the following fields (note the updated keys):
+The server expects a JSON **dict** with the following fields:
 
 ```json
    {
@@ -38,7 +37,7 @@ The server expects a JSON **dict** with the following fields (note the updated k
 
 - **Waypoints:** `geometry_msgs/PoseStamped` published on `dji_msgs/Topics.MOVE_TO_SETPOINT_TOPIC`  
 - **Action result:** Success/failure logged
-- **Logs:** INFO logs for validation, phase transitions, and completion
+- **Logs:** INFO logs for validation, phase transitions, completion
 
 ---
 
