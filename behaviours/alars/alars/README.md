@@ -1,37 +1,44 @@
-# README for RescuePointServer
+# README for recover_action_server
 
-A ROS 2 action server that computes and publishes a multi-phase recovery trajectory for drone–SAM recovery missions. It receives GeoPoints as input and publishes the trajectory as `PoseStamped` setpoints.
+A ROS 2 action server that computes and publishes a multi-phase recovery trajectory for drone–SAM recovery missions. It receives GeoPoints for the **SAM** and the **buoy** as input and publishes the trajectory as `PoseStamped` setpoints.
 
 ---
 
 ## Inputs & Outputs
 
 ### Input
+Action server name: **`/alars_recover`**
 
-* Action Goal: `smarc_mission_msgs/action/BaseAction`
-* Goal JSON (`std_msgs/String` inside the action):
+The server expects a JSON **dict** with the following fields (note the updated keys):
 
-  ```json
-  {
-    "rope_points": [
-      {"latitude": <float>, "longitude": <float>, "altitude": <float>},
-      {"latitude": <float>, "longitude": <float>, "altitude": <float>}
-    ],
-    "min_height_above_water": <float>,
-    "swoop_vertical": <float>,
-    "swoop_horizontal": <float>,
-    "straight_before_rope": <float>,
-    "straight_distance": <float>,
-    "raise_horizontal": <float>,
-    "raise_vertical": <float>
-  }
-  ```
+```json
+   {
+   "object_position": {            // SAM head (GeoPoint)
+      "latitude":  <float>,
+      "longitude": <float>,
+      "altitude":  <float>
+   },
+   "buoy_position": {              // Buoy (GeoPoint)
+      "latitude":  <float>,
+      "longitude": <float>,
+      "altitude":  <float>
+   },
+
+   "min_height_above_water": <float>,  // safety Z at rope midpoint
+   "swoop_vertical":         <float>,  // start-point Z offset above midpoint
+   "swoop_horizontal":       <float>,  // start-point lateral offset (perpendicular to rope)
+   "straight_before_rope":   <float>,  // switch distance to flat pass
+   "straight_distance":      <float>,  // flat pass length after SAM
+   "raise_horizontal":       <float>,  // incline horizontal component
+   "raise_vertical":         <float>   // incline vertical component
+   }
+```
 
 ### Output
 
-* Waypoints: `geometry_msgs/PoseStamped` on `setpoint_topic` (frame: `/<robot_name>/odom`)
-* Action Result: `success: bool`
-* Logs: `INFO` messages for goal validation, phase changes, and completion
+- **Waypoints:** `geometry_msgs/PoseStamped` published on `dji_msgs/Topics.MOVE_TO_SETPOINT_TOPIC`  
+- **Action result:** Success/failure logged
+- **Logs:** INFO logs for validation, phase transitions, and completion
 
 ---
 
@@ -48,16 +55,14 @@ Goal JSON (per mission; shown with sensible starting values):
 
 ROS params:
 
-* `setpoint_topic`: topic your controller subscribes to (default: `"move_to_setpoint"`)
-
+* `setpoint_topic`: topic your controller subscribes to (default: `dji_msgs/Topics.MOVE_TO_SETPOINT_TOPIC`)
 
 ---
 
 ## Parameters — Might Need to be Changed (tuning/validation)
 
-* `dt` (s): timer/publish rate (default: `0.05`)
-* `num_steps`: τ-law resolution, samples start→touchdown (default: `400`)
-* `setpoint_tolerance` (m): “reached”/phase transition tolerance (default: `0.1`)
+* `setpoint_tolerance` (m): “reached”/phase transition tolerance (default: `0.2`)
+* `num_steps`: τ-law resolution, samples start→touchdown (default: `100`)
 * `target_index_offset`: look-ahead along τ-law (default: `5`)
 * `tau_trajectory_starting_threshold` (m): arrival threshold at τ start (default: `0.2`)
 * `width_goal_threshold` (m): max SAM–buoy separation (default: `10.0`)
@@ -68,22 +73,24 @@ ROS params:
 ## Parameters — Not Needed to be Changed (advanced)
 
 * `initial_velocity` (m/s): τ timing scale (default: `5.0`)
-* `tau_k`: τ shape parameter (default: `0.4`, range: `0.1` to `0.5`)
+* `tau_k`: τ shape parameter (default: `0.4`)
 * `kd_alpha`: α-coupling exponent (default: `0.8`)
 
 ---
 
 ## Phase Overview
 
-1. Go to Start (Pre-Approach Alignment)
-   Build start point perpendicular to rope midpoint:
+1. **Go to Start (Pre-Approach Alignment)**  
+   Build start point perpendicular to rope midpoint:  
    `start = midpoint + (perp_xy * swoop_horizontal) + (ẑ * swoop_vertical)`
 
-2. τ-law Trajectory
-   Smooth curved approach from `start` to `touchdown` (midpoint + `min_height_above_water` in Z), with look-ahead tracking via `target_index_offset`.
+2. **τ-law Trajectory**  
+   Smooth curved approach from `start` to `touchdown` (`midpoint + min_height_above_water` in Z),  
+   with look-ahead tracking via `target_index_offset`.
 
-3. Flat-Horizontal Phase 
-   When within `straight_before_rope` of SAM, fly straight at constant altitude for `straight_distance`. This is where the hook/rope of the drone should make contact with the rope of the SAM
+3. **Flat-Horizontal Phase**  
+   When within `straight_before_rope` of SAM, fly straight at constant altitude for `straight_distance`.  
+   This is where the drone hook/rope should make contact with the SAM rope.
 
-4. Inclined Fly-Out
+4. **Inclined Fly-Out**  
    From end of flat pass, climb along vector defined by `raise_horizontal` and `raise_vertical`.
